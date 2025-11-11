@@ -83,6 +83,7 @@ func initConfig() {
 	viper.SetDefault("verbose", false)
 	viper.SetDefault("debug", false)
 	viper.SetDefault("log_json", false)
+	viper.SetDefault("output.public_only", true)
 
 	// Read in environment variables that match
 	viper.AutomaticEnv()

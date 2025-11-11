@@ -20,5 +20,6 @@ type Config struct {
 		IncludeMediaURLs bool
 		Template         string // Template to use: "default" (built-in) or path to custom file
 		SortOrder        string // "asc" (oldest first) or "desc" (newest first)
+		PublicOnly       bool   // Only include public posts (exclude direct/private)
 	}
 }

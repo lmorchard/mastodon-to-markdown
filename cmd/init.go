@@ -45,6 +45,10 @@ output:
   # Sort order for posts: "asc" (oldest first, forward chronological) or "desc" (newest first)
   # Default: "asc"
   sort_order: "asc"
+
+  # Only include public posts (exclude direct messages and private posts)
+  # Default: true
+  public_only: true
 `
 
 // initCmd represents the init command

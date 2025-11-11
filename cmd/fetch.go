@@ -119,6 +119,7 @@ Example usage:
 			viper.GetBool("fetch.exclude_replies"),
 			viper.GetBool("fetch.exclude_boosts"),
 			viper.GetString("fetch.visibility"),
+			viper.GetBool("output.public_only"),
 		)
 
 		log.Infof("After filtering: %d statuses", len(filtered))
@@ -172,6 +173,7 @@ func init() {
 	// Output flags
 	fetchCmd.Flags().StringP("output", "o", "", "Output file (default: stdout)")
 	fetchCmd.Flags().String("sort-order", "asc", "Sort order: 'asc' (oldest first) or 'desc' (newest first)")
+	fetchCmd.Flags().Bool("public-only", true, "Only include public posts (exclude direct/private)")
 
 	// Filter flags
 	fetchCmd.Flags().Bool("exclude-replies", false, "Exclude reply posts")
@@ -184,13 +186,14 @@ func init() {
 	_ = viper.BindPFlag("fetch.end", fetchCmd.Flags().Lookup("end"))
 	_ = viper.BindPFlag("fetch.output", fetchCmd.Flags().Lookup("output"))
 	_ = viper.BindPFlag("output.sort_order", fetchCmd.Flags().Lookup("sort-order"))
+	_ = viper.BindPFlag("output.public_only", fetchCmd.Flags().Lookup("public-only"))
 	_ = viper.BindPFlag("fetch.exclude_replies", fetchCmd.Flags().Lookup("exclude-replies"))
 	_ = viper.BindPFlag("fetch.exclude_boosts", fetchCmd.Flags().Lookup("exclude-boosts"))
 	_ = viper.BindPFlag("fetch.visibility", fetchCmd.Flags().Lookup("visibility"))
 }
 
 // filterStatuses applies visibility, reply, and boost filters to statuses
-func filterStatuses(statuses []*mastodonAPI.Status, excludeReplies, excludeBoosts bool, visibilityFilter string) []*mastodonAPI.Status {
+func filterStatuses(statuses []*mastodonAPI.Status, excludeReplies, excludeBoosts bool, visibilityFilter string, publicOnly bool) []*mastodonAPI.Status {
 	filtered := []*mastodonAPI.Status{}
 
 	// Parse visibility filter
@@ -209,6 +212,11 @@ func filterStatuses(statuses []*mastodonAPI.Status, excludeReplies, excludeBoost
 
 		// Filter boosts
 		if excludeBoosts && status.Reblog != nil {
+			continue
+		}
+
+		// Filter by public_only (exclude direct and private posts)
+		if publicOnly && (status.Visibility == "direct" || status.Visibility == "private") {
 			continue
 		}
 
