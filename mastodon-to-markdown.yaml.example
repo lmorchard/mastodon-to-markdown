@@ -27,5 +27,11 @@ output:
   # Include URLs for media attachments
   include_media_urls: true
 
-  # Template to use for output (default, compact, or path to custom template file)
-  template: "default"
+  # Template to use for output
+  # Leave empty or omit to use built-in default template
+  # Set to a filename to use a custom template file (e.g., "mastodon-to-markdown.md")
+  template: ""
+
+  # Sort order for posts: "asc" (oldest first, forward chronological) or "desc" (newest first)
+  # Default: "asc"
+  sort_order: "asc"

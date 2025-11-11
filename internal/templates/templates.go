@@ -11,6 +11,11 @@ import (
 //go:embed default.md
 var defaultTemplate string
 
+// GetDefaultTemplate returns the embedded default template content
+func GetDefaultTemplate() (string, error) {
+	return defaultTemplate, nil
+}
+
 // Renderer handles loading and rendering markdown templates
 type Renderer struct {
 	tmpl *template.Template
@@ -23,7 +28,7 @@ func NewRenderer(templatePath string) (*Renderer, error) {
 	var tmpl *template.Template
 	var err error
 
-	if templatePath == "" || templatePath == "default" {
+	if templatePath == "" {
 		// Use embedded default template
 		tmpl, err = template.New("default").Parse(defaultTemplate)
 		if err != nil {

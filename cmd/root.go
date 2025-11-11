@@ -19,11 +19,20 @@ var (
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "mastodon-to-markdown",
-	Short: "A brief description of your application",
-	Long: `A longer description of what your application does and how it works.
+	Short: "Export Mastodon posts to markdown for blog post creation",
+	Long: `mastodon-to-markdown fetches posts from your Mastodon account and exports
+them to a well-formatted markdown document, perfect as a starting point for
+blog posts or content curation.
 
-This can be multiple lines and should provide helpful context about the
-purpose and usage of your CLI tool.`,
+Features:
+  - Fetch posts from any time range (last 7 days, custom dates, etc.)
+  - Filter by visibility, exclude replies or boosts
+  - Export to file or stdout
+  - Customizable output templates
+  - Preserves content warnings and media attachments
+
+Example:
+  mastodon-to-markdown fetch --since 7d --output posts.md`,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		initConfig()
 		setupLogging()

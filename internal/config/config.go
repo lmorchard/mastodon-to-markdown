@@ -18,6 +18,7 @@ type Config struct {
 	Output struct {
 		IncludeMetadata  bool
 		IncludeMediaURLs bool
-		Template         string
+		Template         string // Template to use: "default" (built-in) or path to custom file
+		SortOrder        string // "asc" (oldest first) or "desc" (newest first)
 	}
 }

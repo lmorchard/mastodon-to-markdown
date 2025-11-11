@@ -95,8 +95,21 @@ output:
 - Wired up all components in `cmd/fetch.go`
 - Implemented pagination loop to fetch all statuses in time range
 - Added filtering for replies, boosts, and visibility
+- Added sort order control (ascending/descending) with config, env var, and CLI flag support
+- Default to forward chronological order (oldest first)
 - Integrated template rendering with output to file or stdout
 - Added progress logging at key steps
+
+**Additional Commands**
+- `whoami` command: Diagnostic tool to display authenticated account information
+  - Shows username, display name, stats, account URL
+  - Verifies credentials and configuration
+  - Useful for troubleshooting setup
+- `init` command: Generates starter files
+  - Creates `mastodon-to-markdown.yaml` with defaults and documentation
+  - Creates `custom-template.md` for template customization
+  - Includes `--force` flag to overwrite existing files
+  - Prevents accidental overwrites with clear error messages
 
 **Code Quality**
 - Fixed import paths (github.com/lmorchard/mastodon-to-markdown)
@@ -114,6 +127,8 @@ output:
 - `internal/mastodon/converter.go` - Status to Post converter
 - `internal/timerange/timerange.go` - Time range parsing utilities
 - `cmd/fetch.go` - Complete fetch command implementation
+- `cmd/whoami.go` - Diagnostic command to show account information
+- `cmd/init.go` - Initialize config and template files
 
 ### Current Status
 
@@ -121,9 +136,10 @@ output:
 
 The core functionality is implemented and ready for testing with a real Mastodon account. To use:
 
-1. Copy `mastodon-to-markdown.yaml.example` to `mastodon-to-markdown.yaml`
-2. Fill in your Mastodon server URL and access token
-3. Run: `./mastodon-to-markdown fetch --since 7d --output posts.md`
+1. Run `./mastodon-to-markdown init` to create config and template files
+2. Edit `mastodon-to-markdown.yaml` and add your Mastodon server and access token
+3. Run `./mastodon-to-markdown whoami` to verify your credentials
+4. Run `./mastodon-to-markdown fetch --since 7d --output posts.md` to export posts
 
 ### Next Steps
 

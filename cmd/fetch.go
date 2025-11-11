@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/lmorchard/mastodon-to-markdown/internal/mastodon"
@@ -125,6 +126,13 @@ Example usage:
 		// Convert to template format
 		posts := mastodon.ConvertStatuses(filtered)
 
+		// Sort posts based on configuration
+		sortOrder := viper.GetString("output.sort_order")
+		if sortOrder == "" {
+			sortOrder = "asc" // Default to oldest first
+		}
+		sortPosts(posts, sortOrder)
+
 		// Prepare template data
 		data := &templates.TemplateData{
 			StartDate: timerange.FormatDate(tr.Start),
@@ -163,6 +171,7 @@ func init() {
 
 	// Output flags
 	fetchCmd.Flags().StringP("output", "o", "", "Output file (default: stdout)")
+	fetchCmd.Flags().String("sort-order", "asc", "Sort order: 'asc' (oldest first) or 'desc' (newest first)")
 
 	// Filter flags
 	fetchCmd.Flags().Bool("exclude-replies", false, "Exclude reply posts")
@@ -174,6 +183,7 @@ func init() {
 	_ = viper.BindPFlag("fetch.start", fetchCmd.Flags().Lookup("start"))
 	_ = viper.BindPFlag("fetch.end", fetchCmd.Flags().Lookup("end"))
 	_ = viper.BindPFlag("fetch.output", fetchCmd.Flags().Lookup("output"))
+	_ = viper.BindPFlag("output.sort_order", fetchCmd.Flags().Lookup("sort-order"))
 	_ = viper.BindPFlag("fetch.exclude_replies", fetchCmd.Flags().Lookup("exclude-replies"))
 	_ = viper.BindPFlag("fetch.exclude_boosts", fetchCmd.Flags().Lookup("exclude-boosts"))
 	_ = viper.BindPFlag("fetch.visibility", fetchCmd.Flags().Lookup("visibility"))
@@ -211,4 +221,16 @@ func filterStatuses(statuses []*mastodonAPI.Status, excludeReplies, excludeBoost
 	}
 
 	return filtered
+}
+
+// sortPosts sorts posts by creation time
+// sortOrder: "asc" for oldest first (forward chronological), "desc" for newest first
+func sortPosts(posts []templates.Post, sortOrder string) {
+	sort.Slice(posts, func(i, j int) bool {
+		if sortOrder == "desc" {
+			return posts[i].CreatedAt.After(posts[j].CreatedAt)
+		}
+		// Default to "asc" - oldest first
+		return posts[i].CreatedAt.Before(posts[j].CreatedAt)
+	})
 }
