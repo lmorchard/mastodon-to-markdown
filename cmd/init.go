@@ -84,7 +84,7 @@ Example:
 		}
 
 		// Create config file
-		if err := os.WriteFile(configFile, []byte(defaultConfigContent), 0644); err != nil {
+		if err := os.WriteFile(configFile, []byte(defaultConfigContent), 0o644); err != nil {
 			return fmt.Errorf("failed to create config file: %w", err)
 		}
 
@@ -101,7 +101,7 @@ Example:
 		}
 
 		// Create template file
-		if err := os.WriteFile(templateFile, []byte(templateContent), 0644); err != nil {
+		if err := os.WriteFile(templateFile, []byte(templateContent), 0o644); err != nil {
 			return fmt.Errorf("failed to create template file: %w", err)
 		}
 

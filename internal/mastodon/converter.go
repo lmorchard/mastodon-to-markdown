@@ -12,18 +12,20 @@ import (
 // ConvertStatus converts a Mastodon status to our template Post format
 func ConvertStatus(status *mastodon.Status) templates.Post {
 	post := templates.Post{
-		ID:              string(status.ID),
-		CreatedAt:       status.CreatedAt,
-		FormattedTime:   timerange.FormatDateTime(status.CreatedAt),
-		URL:             status.URL,
-		Content:         cleanContent(status.Content),
-		ContentWarning:  status.SpoilerText,
-		Visibility:      string(status.Visibility),
-		IsReply:         status.InReplyToID != nil,
-		IsBoost:         status.Reblog != nil,
-		RepliesCount:    status.RepliesCount,
-		ReblogsCount:    status.ReblogsCount,
-		FavouritesCount: status.FavouritesCount,
+		ID:                string(status.ID),
+		CreatedAt:         status.CreatedAt,
+		FormattedTime:     timerange.FormatDateTime(status.CreatedAt),
+		FormattedDate:     timerange.FormatDate(status.CreatedAt),
+		FormattedTimeOnly: status.CreatedAt.Format("15:04"),
+		URL:               status.URL,
+		Content:           cleanContent(status.Content),
+		ContentWarning:    status.SpoilerText,
+		Visibility:        string(status.Visibility),
+		IsReply:           status.InReplyToID != nil,
+		IsBoost:           status.Reblog != nil,
+		RepliesCount:      status.RepliesCount,
+		ReblogsCount:      status.ReblogsCount,
+		FavouritesCount:   status.FavouritesCount,
 	}
 
 	// Convert media attachments

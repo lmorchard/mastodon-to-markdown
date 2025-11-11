@@ -1,7 +1,13 @@
 # Posts from {{.StartDate}} to {{.EndDate}}
-
+{{$currentDate := ""}}
 {{range .Posts}}
-## {{.FormattedTime}}
+{{if ne .FormattedDate $currentDate}}
+{{$currentDate = .FormattedDate}}
+
+## {{.FormattedDate}}
+{{end}}
+
+### {{.FormattedTimeOnly}}
 
 {{if .ContentWarning}}CW: {{.ContentWarning}}
 

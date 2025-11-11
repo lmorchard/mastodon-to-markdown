@@ -11,19 +11,21 @@ type TemplateData struct {
 
 // Post represents a Mastodon post with all relevant fields for templating
 type Post struct {
-	ID               string
-	CreatedAt        time.Time
-	FormattedTime    string
-	URL              string
-	Content          string
-	ContentWarning   string
-	Visibility       string
-	IsReply          bool
-	IsBoost          bool
-	MediaAttachments []MediaAttachment
-	RepliesCount     int64
-	ReblogsCount     int64
-	FavouritesCount  int64
+	ID                string
+	CreatedAt         time.Time
+	FormattedTime     string // Full date and time (e.g., "2025-11-11 14:30")
+	FormattedDate     string // Date only (e.g., "2025-11-11")
+	FormattedTimeOnly string // Time only (e.g., "14:30")
+	URL               string
+	Content           string
+	ContentWarning    string
+	Visibility        string
+	IsReply           bool
+	IsBoost           bool
+	MediaAttachments  []MediaAttachment
+	RepliesCount      int64
+	ReblogsCount      int64
+	FavouritesCount   int64
 }
 
 // MediaAttachment represents a media file attached to a post
