@@ -56,14 +56,10 @@ func init() {
 	rootCmd.PersistentFlags().Bool("debug", false, "debug output")
 	rootCmd.PersistentFlags().Bool("log-json", false, "output logs in JSON format")
 
-	// Database flag
-	rootCmd.PersistentFlags().String("database", "mastodon-to-markdown.db", "database file path")
-
 	// Bind flags to viper
 	_ = viper.BindPFlag("verbose", rootCmd.PersistentFlags().Lookup("verbose"))
 	_ = viper.BindPFlag("debug", rootCmd.PersistentFlags().Lookup("debug"))
 	_ = viper.BindPFlag("log_json", rootCmd.PersistentFlags().Lookup("log-json"))
-	_ = viper.BindPFlag("database", rootCmd.PersistentFlags().Lookup("database"))
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -79,7 +75,6 @@ func initConfig() {
 	}
 
 	// Set defaults
-	viper.SetDefault("database", "mastodon-to-markdown.db")
 	viper.SetDefault("verbose", false)
 	viper.SetDefault("debug", false)
 	viper.SetDefault("log_json", false)
@@ -121,10 +116,9 @@ func setupLogging() {
 func GetConfig() *config.Config {
 	if cfg == nil {
 		cfg = &config.Config{
-			Database: viper.GetString("database"),
-			Verbose:  viper.GetBool("verbose"),
-			Debug:    viper.GetBool("debug"),
-			LogJSON:  viper.GetBool("log_json"),
+			Verbose: viper.GetBool("verbose"),
+			Debug:   viper.GetBool("debug"),
+			LogJSON: viper.GetBool("log_json"),
 		}
 	}
 	return cfg

@@ -29,11 +29,6 @@ go.work
 .DS_Store
 Thumbs.db
 
-# Database files
-*.db
-*.sqlite
-*.sqlite3
-
 # Config files (keep examples)
 *.yaml
 !*.yaml.example

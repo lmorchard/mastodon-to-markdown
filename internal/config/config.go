@@ -3,10 +3,9 @@ package config
 // Config holds application configuration
 type Config struct {
 	// Core settings
-	Database string
-	Verbose  bool
-	Debug    bool
-	LogJSON  bool
+	Verbose bool
+	Debug   bool
+	LogJSON bool
 
 	// Mastodon settings
 	Mastodon struct {

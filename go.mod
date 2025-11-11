@@ -5,7 +5,7 @@ go 1.23
 toolchain go1.24.10
 
 require (
-	github.com/mattn/go-sqlite3 v1.14.32
+	github.com/mattn/go-mastodon v0.0.10
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.20.1
@@ -16,7 +16,6 @@ require (
 	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
-	github.com/mattn/go-mastodon v0.0.10 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.3 // indirect
 	github.com/sagikazarmark/locafero v0.7.0 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect

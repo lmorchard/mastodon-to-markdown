@@ -11,9 +11,6 @@ import (
 const defaultConfigContent = `# Configuration file for mastodon-to-markdown
 # Copy this to mastodon-to-markdown.yaml and customize as needed
 
-# Database configuration
-database: "mastodon-to-markdown.db"
-
 # Logging configuration
 verbose: false
 debug: false
