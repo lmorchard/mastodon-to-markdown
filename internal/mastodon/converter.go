@@ -23,14 +23,61 @@ func ConvertStatus(status *mastodon.Status) templates.Post {
 		Visibility:        string(status.Visibility),
 		IsReply:           status.InReplyToID != nil,
 		IsBoost:           status.Reblog != nil,
+		IsFavorited:       false, // Will be set by ConvertFavourite
 		RepliesCount:      status.RepliesCount,
 		ReblogsCount:      status.ReblogsCount,
 		FavouritesCount:   status.FavouritesCount,
 	}
 
+	// If this is a boost, extract the original post and any commentary
+	if status.Reblog != nil {
+		post.BoostCommentary = cleanContent(status.Content)
+		post.OriginalPost = extractOriginalPost(status.Reblog)
+	} else {
+		// Convert media attachments for non-boost posts
+		for _, attachment := range status.MediaAttachments {
+			post.MediaAttachments = append(post.MediaAttachments, templates.MediaAttachment{
+				Type:        string(attachment.Type),
+				URL:         attachment.URL,
+				PreviewURL:  attachment.PreviewURL,
+				Description: attachment.Description,
+			})
+		}
+	}
+
+	return post
+}
+
+// ConvertFavourite converts a favorited Mastodon status to our template Post format
+func ConvertFavourite(status *mastodon.Status) templates.Post {
+	post := templates.Post{
+		ID:                string(status.ID),
+		CreatedAt:         status.CreatedAt,
+		FormattedTime:     timerange.FormatDateTime(status.CreatedAt),
+		FormattedDate:     timerange.FormatDate(status.CreatedAt),
+		FormattedTimeOnly: status.CreatedAt.Format("15:04"),
+		URL:               status.URL,
+		IsFavorited:       true,
+		OriginalPost:      extractOriginalPost(status),
+	}
+
+	return post
+}
+
+// extractOriginalPost extracts original post details from a status
+func extractOriginalPost(status *mastodon.Status) *templates.OriginalPost {
+	original := &templates.OriginalPost{
+		AuthorName:     status.Account.DisplayName,
+		AuthorUsername: string(status.Account.Username),
+		AuthorURL:      status.Account.URL,
+		Content:        cleanContent(status.Content),
+		ContentWarning: status.SpoilerText,
+		URL:            status.URL,
+	}
+
 	// Convert media attachments
 	for _, attachment := range status.MediaAttachments {
-		post.MediaAttachments = append(post.MediaAttachments, templates.MediaAttachment{
+		original.MediaAttachments = append(original.MediaAttachments, templates.MediaAttachment{
 			Type:        string(attachment.Type),
 			URL:         attachment.URL,
 			PreviewURL:  attachment.PreviewURL,
@@ -38,7 +85,7 @@ func ConvertStatus(status *mastodon.Status) templates.Post {
 		})
 	}
 
-	return post
+	return original
 }
 
 // ConvertStatuses converts multiple Mastodon statuses
@@ -46,6 +93,15 @@ func ConvertStatuses(statuses []*mastodon.Status) []templates.Post {
 	posts := make([]templates.Post, 0, len(statuses))
 	for _, status := range statuses {
 		posts = append(posts, ConvertStatus(status))
+	}
+	return posts
+}
+
+// ConvertFavourites converts multiple favorited Mastodon statuses
+func ConvertFavourites(statuses []*mastodon.Status) []templates.Post {
+	posts := make([]templates.Post, 0, len(statuses))
+	for _, status := range statuses {
+		posts = append(posts, ConvertFavourite(status))
 	}
 	return posts
 }

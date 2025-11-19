@@ -53,6 +53,15 @@ func (c *Client) GetStatuses(ctx context.Context, accountID mastodon.ID, pg *mas
 	return statuses, nil
 }
 
+// GetFavourites fetches favorited posts for the authenticated user
+func (c *Client) GetFavourites(ctx context.Context, pg *mastodon.Pagination) ([]*mastodon.Status, error) {
+	statuses, err := c.client.GetFavourites(ctx, pg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch favourites: %w", err)
+	}
+	return statuses, nil
+}
+
 // GetClient returns the underlying go-mastodon client for advanced use
 func (c *Client) GetClient() *mastodon.Client {
 	return c.client

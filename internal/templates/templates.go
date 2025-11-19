@@ -16,6 +16,39 @@ func GetDefaultTemplate() (string, error) {
 	return defaultTemplate, nil
 }
 
+// GroupPostsByDay organizes posts by date and type (own, boosted, favorited)
+func GroupPostsByDay(posts []Post) []DayGroup {
+	dayMap := make(map[string]*DayGroup)
+	var dates []string
+
+	for _, post := range posts {
+		date := post.FormattedDate
+
+		// Create day group if it doesn't exist
+		if _, exists := dayMap[date]; !exists {
+			dayMap[date] = &DayGroup{Date: date}
+			dates = append(dates, date)
+		}
+
+		// Add post to appropriate category
+		if post.IsFavorited {
+			dayMap[date].FavoritedPosts = append(dayMap[date].FavoritedPosts, post)
+		} else if post.IsBoost {
+			dayMap[date].BoostedPosts = append(dayMap[date].BoostedPosts, post)
+		} else {
+			dayMap[date].OwnPosts = append(dayMap[date].OwnPosts, post)
+		}
+	}
+
+	// Convert map to sorted slice
+	result := make([]DayGroup, 0, len(dates))
+	for _, date := range dates {
+		result = append(result, *dayMap[date])
+	}
+
+	return result
+}
+
 // Renderer handles loading and rendering markdown templates
 type Renderer struct {
 	tmpl *template.Template

@@ -10,6 +10,7 @@ Export your Mastodon posts to markdown for blog post creation and content curati
 
 - **Flexible Time Ranges**: Fetch posts from the last N hours/days/weeks, or specify exact date ranges
 - **Smart Filtering**: Exclude replies, boosts, or private posts
+- **Favorites & Boosts**: Include posts you've favorited and boosted, organized by day
 - **Customizable Output**: Use the built-in template or create your own
 - **Multiple Sort Orders**: Forward chronological (oldest first) or reverse (newest first)
 - **Content Preservation**: Keeps content warnings, media attachments, and post metadata
@@ -86,6 +87,13 @@ output:
   template: ""  # Empty = use built-in template
   sort_order: "asc"  # "asc" (oldest first) or "desc" (newest first)
   public_only: true  # Exclude private and direct messages
+
+# Fetch configuration
+fetch:
+  exclude_replies: false      # Exclude reply posts
+  exclude_boosts: false       # Exclude boosted posts
+  exclude_favorites: false    # Exclude favorited posts
+  visibility: ""              # Filter by visibility
 ```
 
 ### Environment Variables
@@ -96,6 +104,8 @@ All configuration options can be set via environment variables using the `MASTOD
 export MASTODON_TO_MARKDOWN_MASTODON_SERVER="https://your-instance.social"
 export MASTODON_TO_MARKDOWN_MASTODON_ACCESS_TOKEN="your-token"
 export MASTODON_TO_MARKDOWN_OUTPUT_SORT_ORDER="desc"
+export MASTODON_TO_MARKDOWN_FETCH_EXCLUDE_FAVORITES="true"   # Exclude favorites
+export MASTODON_TO_MARKDOWN_FETCH_EXCLUDE_REPLIES="true"     # Exclude replies
 ```
 
 ## Usage
@@ -141,6 +151,9 @@ mastodon-to-markdown fetch --start 2025-11-01 --end 2025-11-07 --output posts.md
 # Fetch last 24 hours, exclude replies
 mastodon-to-markdown fetch --since 24h --exclude-replies --output today.md
 
+# Exclude favorited posts (only your own posts and boosts)
+mastodon-to-markdown fetch --since 7d --exclude-favorites --output posts.md
+
 # Fetch to stdout (for piping)
 mastodon-to-markdown fetch --since 7d
 
@@ -169,6 +182,7 @@ mastodon-to-markdown version
 | `--output`, `-o` | Output file | stdout |
 | `--exclude-replies` | Exclude reply posts | false |
 | `--exclude-boosts` | Exclude boosted posts | false |
+| `--exclude-favorites` | Exclude favorited posts | false |
 | `--public-only` | Only public posts | true |
 | `--sort-order` | Sort: 'asc' or 'desc' | asc |
 | `--visibility` | Filter by visibility (comma-separated) | - |
@@ -252,17 +266,29 @@ Fetch your posts from the last week and create a blog post draft:
 mastodon-to-markdown fetch --since 7d \
   --exclude-replies \
   --exclude-boosts \
+  --exclude-favorites \
   --output blog-draft-$(date +%Y-%m-%d).md
 ```
 
 ### Weekly Roundup
 
-Create a weekly roundup of all your public activity:
+Create a weekly roundup of all your public activity (posts, boosts, and favorites):
 
 ```bash
 mastodon-to-markdown fetch --since 7d \
   --sort-order desc \
   --output weekly-roundup.md
+```
+
+### Content Curation
+
+Create a curated list of interesting posts you've favorited:
+
+```bash
+mastodon-to-markdown fetch --since 30d \
+  --exclude-replies \
+  --exclude-boosts \
+  --output curated-favorites.md
 ```
 
 ### Archive Month
@@ -279,12 +305,13 @@ mastodon-to-markdown fetch \
 
 ### Thread Export
 
-Export just your original posts (no replies or boosts):
+Export just your original posts (no replies, boosts, or favorites):
 
 ```bash
 mastodon-to-markdown fetch --since 30d \
   --exclude-replies \
   --exclude-boosts \
+  --exclude-favorites \
   --output my-threads.md
 ```
 

@@ -21,4 +21,12 @@ type Config struct {
 		SortOrder        string // "asc" (oldest first) or "desc" (newest first)
 		PublicOnly       bool   // Only include public posts (exclude direct/private)
 	}
+
+	// Fetch settings
+	Fetch struct {
+		ExcludeReplies    bool
+		ExcludeBoosts     bool
+		ExcludeFavorites  bool // Exclude favorited posts
+		Visibility        string
+	}
 }

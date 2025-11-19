@@ -127,6 +127,66 @@ Example usage:
 		// Convert to template format
 		posts := mastodon.ConvertStatuses(filtered)
 
+		// Fetch favorites unless excluded
+		if !viper.GetBool("fetch.exclude_favorites") {
+			log.Info("Fetching favorites...")
+			allFavorites := []*mastodonAPI.Status{}
+			maxID = "" // Reset maxID for favorites pagination
+
+			// Pagination loop for favorites with smart stopping
+			consecutiveEmptyPages := 0
+			maxConsecutiveEmpty := 2 // Stop after 2 pages with no matches
+			maxTotalPages := 3       // Safety limit: ~120 favorites
+
+			for pageCount := 0; pageCount < maxTotalPages; pageCount++ {
+				pg := &mastodonAPI.Pagination{
+					MaxID: maxID,
+					Limit: 40,
+				}
+
+				favorites, err := client.GetFavourites(ctx, pg)
+				if err != nil {
+					return fmt.Errorf("failed to fetch favourites: %w", err)
+				}
+
+				if len(favorites) == 0 {
+					break
+				}
+
+				// Filter by time range
+				foundInRange := false
+				for _, status := range favorites {
+					if status.CreatedAt.Before(tr.Start) {
+						continue
+					}
+					if status.CreatedAt.After(tr.End) {
+						continue
+					}
+					foundInRange = true
+					allFavorites = append(allFavorites, status)
+				}
+
+				// Smart stopping: if no matches in recent pages, we're probably past the date range
+				if !foundInRange {
+					consecutiveEmptyPages++
+					if consecutiveEmptyPages >= maxConsecutiveEmpty {
+						log.Info("No matches in recent pages, stopping favorites pagination")
+						break
+					}
+				} else {
+					consecutiveEmptyPages = 0 // Reset counter on match
+				}
+
+				maxID = favorites[len(favorites)-1].ID
+			}
+
+			log.Infof("Found %d favorites in time range", len(allFavorites))
+
+			// Convert favorites and add to posts
+			favoritePosts := mastodon.ConvertFavourites(allFavorites)
+			posts = append(posts, favoritePosts...)
+		}
+
 		// Sort posts based on configuration
 		sortOrder := viper.GetString("output.sort_order")
 		if sortOrder == "" {
@@ -139,6 +199,7 @@ Example usage:
 			StartDate: timerange.FormatDate(tr.Start),
 			EndDate:   timerange.FormatDate(tr.End),
 			Posts:     posts,
+			Days:      templates.GroupPostsByDay(posts),
 		}
 
 		// Initialize template renderer
@@ -178,6 +239,7 @@ func init() {
 	// Filter flags
 	fetchCmd.Flags().Bool("exclude-replies", false, "Exclude reply posts")
 	fetchCmd.Flags().Bool("exclude-boosts", false, "Exclude boosted posts")
+	fetchCmd.Flags().Bool("exclude-favorites", false, "Exclude favorited posts")
 	fetchCmd.Flags().String("visibility", "", "Filter by visibility (comma-separated: public,unlisted,private)")
 
 	// Bind flags to viper
@@ -189,6 +251,7 @@ func init() {
 	_ = viper.BindPFlag("output.public_only", fetchCmd.Flags().Lookup("public-only"))
 	_ = viper.BindPFlag("fetch.exclude_replies", fetchCmd.Flags().Lookup("exclude-replies"))
 	_ = viper.BindPFlag("fetch.exclude_boosts", fetchCmd.Flags().Lookup("exclude-boosts"))
+	_ = viper.BindPFlag("fetch.exclude_favorites", fetchCmd.Flags().Lookup("exclude-favorites"))
 	_ = viper.BindPFlag("fetch.visibility", fetchCmd.Flags().Lookup("visibility"))
 }
 

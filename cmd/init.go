@@ -46,6 +46,24 @@ output:
   # Only include public posts (exclude direct messages and private posts)
   # Default: true
   public_only: true
+
+# Fetch configuration
+fetch:
+  # Exclude reply posts from output
+  # Default: false
+  exclude_replies: false
+
+  # Exclude boosted posts from output
+  # Default: false
+  exclude_boosts: false
+
+  # Exclude favorited posts from output
+  # Default: false
+  exclude_favorites: false
+
+  # Filter by visibility (comma-separated: public,unlisted,private)
+  # Leave empty to include all visibilities (subject to public_only setting)
+  visibility: ""
 `
 
 // initCmd represents the init command
