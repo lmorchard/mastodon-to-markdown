@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/lmorchard/mastodon-to-markdown/internal/config"
 	"github.com/sirupsen/logrus"
@@ -81,6 +82,8 @@ func initConfig() {
 	viper.SetDefault("output.public_only", true)
 
 	// Read in environment variables that match
+	// Maps e.g. MASTODON_SERVER -> mastodon.server, MASTODON_ACCESS_TOKEN -> mastodon.access_token
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv()
 
 	// If a config file is found, read it in

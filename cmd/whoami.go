@@ -28,10 +28,10 @@ Example:
 
 		// Validate configuration
 		if cfg.Mastodon.Server == "" {
-			return fmt.Errorf("mastodon server not configured (set mastodon.server in config file)")
+			return fmt.Errorf("mastodon server not configured (set via --server flag, MASTODON_SERVER env var, or mastodon.server in config file)")
 		}
 		if cfg.Mastodon.AccessToken == "" {
-			return fmt.Errorf("mastodon access token not configured (set mastodon.access_token in config file)")
+			return fmt.Errorf("mastodon access token not configured (set via --token flag, MASTODON_ACCESS_TOKEN env var, or mastodon.access_token in config file)")
 		}
 
 		// Initialize Mastodon client

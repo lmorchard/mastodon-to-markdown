@@ -226,6 +226,10 @@ Example usage:
 func init() {
 	rootCmd.AddCommand(fetchCmd)
 
+	// Auth flags (alternative to config file / env vars)
+	fetchCmd.Flags().String("server", "", "Mastodon server URL (e.g., https://mastodon.social)")
+	fetchCmd.Flags().String("token", "", "Mastodon access token")
+
 	// Time range flags
 	fetchCmd.Flags().String("since", "", "Time period to fetch (e.g., '24h', '7d')")
 	fetchCmd.Flags().String("start", "", "Start date (YYYY-MM-DD)")
@@ -243,6 +247,8 @@ func init() {
 	fetchCmd.Flags().String("visibility", "", "Filter by visibility (comma-separated: public,unlisted,private)")
 
 	// Bind flags to viper
+	_ = viper.BindPFlag("mastodon.server", fetchCmd.Flags().Lookup("server"))
+	_ = viper.BindPFlag("mastodon.access_token", fetchCmd.Flags().Lookup("token"))
 	_ = viper.BindPFlag("fetch.since", fetchCmd.Flags().Lookup("since"))
 	_ = viper.BindPFlag("fetch.start", fetchCmd.Flags().Lookup("start"))
 	_ = viper.BindPFlag("fetch.end", fetchCmd.Flags().Lookup("end"))
