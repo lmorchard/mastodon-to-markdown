@@ -12,8 +12,10 @@ jobs:
     steps:
       - name: Check for [noci] in commit message
         id: check_commit
+        env:
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
         run: |
-          if [[ "${{ github.event.head_commit.message }}" == "[noci]"* ]]; then
+          if [[ "$COMMIT_MSG" == "[noci]"* ]]; then
             echo "skip=true" >> $GITHUB_OUTPUT
           else
             echo "skip=false" >> $GITHUB_OUTPUT
