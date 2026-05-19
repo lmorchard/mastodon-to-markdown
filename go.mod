@@ -1,8 +1,6 @@
 module github.com/lmorchard/mastodon-to-markdown
 
-go 1.23
-
-toolchain go1.24.10
+go 1.25.0
 
 require (
 	github.com/mattn/go-mastodon v0.0.10
