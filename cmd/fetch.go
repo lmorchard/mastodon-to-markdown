@@ -53,8 +53,8 @@ func runFetchPipeline(ctx context.Context, tr *timerange.TimeRange, outputFile s
 	log := GetLogger()
 	cfg := GetConfig()
 
-	cfg.Mastodon.Server = viper.GetString("mastodon.server")
-	cfg.Mastodon.AccessToken = viper.GetString("mastodon.access_token")
+	cfg.Server = viper.GetString("server")
+	cfg.AccessToken = viper.GetString("access_token")
 	cfg.Output.Template = viper.GetString("output.template")
 
 	log.Infof("Fetching posts from %s to %s", timerange.FormatDate(tr.Start), timerange.FormatDate(tr.End))
@@ -255,8 +255,8 @@ func init() {
 	fetchCmd.Flags().String("visibility", "", "Filter by visibility (comma-separated: public,unlisted,private)")
 
 	// Bind flags to viper
-	_ = viper.BindPFlag("mastodon.server", fetchCmd.Flags().Lookup("server"))
-	_ = viper.BindPFlag("mastodon.access_token", fetchCmd.Flags().Lookup("token"))
+	_ = viper.BindPFlag("server", fetchCmd.Flags().Lookup("server"))
+	_ = viper.BindPFlag("access_token", fetchCmd.Flags().Lookup("token"))
 	_ = viper.BindPFlag("fetch.since", fetchCmd.Flags().Lookup("since"))
 	_ = viper.BindPFlag("fetch.start", fetchCmd.Flags().Lookup("start"))
 	_ = viper.BindPFlag("fetch.end", fetchCmd.Flags().Lookup("end"))

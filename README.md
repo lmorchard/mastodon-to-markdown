@@ -75,10 +75,9 @@ verbose: false
 debug: false
 log_json: false
 
-# Mastodon configuration
-mastodon:
-  server: "https://mastodon.social"
-  access_token: "your-token-here"
+# Mastodon API
+server: "https://mastodon.social"
+access_token: "your-token-here"
 
 # Output configuration
 output:
@@ -98,14 +97,14 @@ fetch:
 
 ### Environment Variables
 
-All configuration options can be set via environment variables using the `MASTODON_TO_MARKDOWN_` prefix:
+Every config key is reachable via an environment variable with the `MASTODON_` prefix. Nested keys use `_` as the separator:
 
 ```bash
-export MASTODON_TO_MARKDOWN_MASTODON_SERVER="https://your-instance.social"
-export MASTODON_TO_MARKDOWN_MASTODON_ACCESS_TOKEN="your-token"
-export MASTODON_TO_MARKDOWN_OUTPUT_SORT_ORDER="desc"
-export MASTODON_TO_MARKDOWN_FETCH_EXCLUDE_FAVORITES="true"   # Exclude favorites
-export MASTODON_TO_MARKDOWN_FETCH_EXCLUDE_REPLIES="true"     # Exclude replies
+export MASTODON_SERVER="https://your-instance.social"
+export MASTODON_ACCESS_TOKEN="your-token"
+export MASTODON_OUTPUT_SORT_ORDER="desc"
+export MASTODON_FETCH_EXCLUDE_FAVORITES="true"   # Exclude favorites
+export MASTODON_FETCH_EXCLUDE_REPLIES="true"     # Exclude replies
 ```
 
 ## Usage

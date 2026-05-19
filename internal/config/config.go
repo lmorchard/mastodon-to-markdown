@@ -7,11 +7,9 @@ type Config struct {
 	Debug   bool
 	LogJSON bool
 
-	// Mastodon settings
-	Mastodon struct {
-		Server      string
-		AccessToken string
-	}
+	// Mastodon API settings (flat keys; env vars are MASTODON_SERVER / MASTODON_ACCESS_TOKEN)
+	Server      string
+	AccessToken string
 
 	// Output settings
 	Output struct {

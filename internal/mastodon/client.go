@@ -16,16 +16,16 @@ type Client struct {
 
 // NewClient creates a new Mastodon API client
 func NewClient(cfg *config.Config) (*Client, error) {
-	if cfg.Mastodon.Server == "" {
+	if cfg.Server == "" {
 		return nil, fmt.Errorf("mastodon server URL is required")
 	}
-	if cfg.Mastodon.AccessToken == "" {
+	if cfg.AccessToken == "" {
 		return nil, fmt.Errorf("mastodon access token is required")
 	}
 
 	client := mastodon.NewClient(&mastodon.Config{
-		Server:      cfg.Mastodon.Server,
-		AccessToken: cfg.Mastodon.AccessToken,
+		Server:      cfg.Server,
+		AccessToken: cfg.AccessToken,
 	})
 
 	return &Client{

@@ -81,8 +81,10 @@ func initConfig() {
 	viper.SetDefault("log_json", false)
 	viper.SetDefault("output.public_only", true)
 
-	// Read in environment variables that match
-	// Maps e.g. MASTODON_SERVER -> mastodon.server, MASTODON_ACCESS_TOKEN -> mastodon.access_token
+	// Read in environment variables that match. Every config key is reachable
+	// via MASTODON_<KEY>, with `.` in nested keys becoming `_`
+	// (e.g. fetch.since -> MASTODON_FETCH_SINCE).
+	viper.SetEnvPrefix("MASTODON")
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv()
 

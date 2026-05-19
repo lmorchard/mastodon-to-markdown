@@ -16,15 +16,13 @@ verbose: false
 debug: false
 log_json: false
 
-# Mastodon configuration
-mastodon:
-  # Your Mastodon instance URL (required)
-  server: "https://mastodon.social"
+# Mastodon instance URL (required) — env: MASTODON_SERVER
+server: "https://mastodon.social"
 
-  # Access token for authentication
-  # Generate at: Settings > Development > New Application
-  # Required scope: read:statuses
-  access_token: ""
+# Access token for authentication — env: MASTODON_ACCESS_TOKEN
+# Generate at: Settings > Development > New Application
+# Required scope: read:statuses
+access_token: ""
 
 # Output configuration
 output:

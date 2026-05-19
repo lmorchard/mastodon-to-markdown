@@ -23,15 +23,15 @@ Example:
 		cfg := GetConfig()
 
 		// Load Mastodon config from viper
-		cfg.Mastodon.Server = viper.GetString("mastodon.server")
-		cfg.Mastodon.AccessToken = viper.GetString("mastodon.access_token")
+		cfg.Server = viper.GetString("server")
+		cfg.AccessToken = viper.GetString("access_token")
 
 		// Validate configuration
-		if cfg.Mastodon.Server == "" {
-			return fmt.Errorf("mastodon server not configured (set via --server flag, MASTODON_SERVER env var, or mastodon.server in config file)")
+		if cfg.Server == "" {
+			return fmt.Errorf("mastodon server not configured (set via --server flag, MASTODON_SERVER env var, or `server:` in config file)")
 		}
-		if cfg.Mastodon.AccessToken == "" {
-			return fmt.Errorf("mastodon access token not configured (set via --token flag, MASTODON_ACCESS_TOKEN env var, or mastodon.access_token in config file)")
+		if cfg.AccessToken == "" {
+			return fmt.Errorf("mastodon access token not configured (set via --token flag, MASTODON_ACCESS_TOKEN env var, or `access_token:` in config file)")
 		}
 
 		// Initialize Mastodon client
@@ -49,7 +49,7 @@ Example:
 
 		// Display account information
 		fmt.Printf("\n✅ Successfully authenticated!\n\n")
-		fmt.Printf("Server:        %s\n", cfg.Mastodon.Server)
+		fmt.Printf("Server:        %s\n", cfg.Server)
 		fmt.Printf("Username:      @%s\n", account.Username)
 		fmt.Printf("Display Name:  %s\n", account.DisplayName)
 		fmt.Printf("Account ID:    %s\n", account.ID)
