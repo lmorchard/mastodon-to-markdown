@@ -27,16 +27,8 @@ Example usage:
   mastodon-to-markdown fetch --since 24h --exclude-replies`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		log := GetLogger()
-		cfg := GetConfig()
-
 		log.Info("Running fetch command")
 
-		// Load Mastodon config from viper
-		cfg.Mastodon.Server = viper.GetString("mastodon.server")
-		cfg.Mastodon.AccessToken = viper.GetString("mastodon.access_token")
-		cfg.Output.Template = viper.GetString("output.template")
-
-		// Parse time range
 		since := viper.GetString("fetch.since")
 		start := viper.GetString("fetch.start")
 		end := viper.GetString("fetch.end")
@@ -46,181 +38,197 @@ Example usage:
 			return fmt.Errorf("invalid time range: %w", err)
 		}
 
-		log.Infof("Fetching posts from %s to %s", timerange.FormatDate(tr.Start), timerange.FormatDate(tr.End))
+		outputFile := viper.GetString("fetch.output")
+		return runFetchPipeline(context.Background(), tr, outputFile)
+	},
+}
 
-		// Initialize Mastodon client
-		client, err := mastodon.NewClient(cfg)
-		if err != nil {
-			return fmt.Errorf("failed to create Mastodon client: %w", err)
+// runFetchPipeline executes the full Mastodon fetch+render pipeline for the
+// given time range, writing output to outputFile (empty string = stdout). All
+// other options (credentials, filter flags, sort order, template) are read
+// from viper at call time.
+//
+// Used by both fetchCmd and exportCmd.
+func runFetchPipeline(ctx context.Context, tr *timerange.TimeRange, outputFile string) error {
+	log := GetLogger()
+	cfg := GetConfig()
+
+	cfg.Mastodon.Server = viper.GetString("mastodon.server")
+	cfg.Mastodon.AccessToken = viper.GetString("mastodon.access_token")
+	cfg.Output.Template = viper.GetString("output.template")
+
+	log.Infof("Fetching posts from %s to %s", timerange.FormatDate(tr.Start), timerange.FormatDate(tr.End))
+
+	// Initialize Mastodon client
+	client, err := mastodon.NewClient(cfg)
+	if err != nil {
+		return fmt.Errorf("failed to create Mastodon client: %w", err)
+	}
+
+	// Verify credentials and get account info
+	account, err := client.VerifyCredentials(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to verify Mastodon credentials: %w", err)
+	}
+
+	log.Infof("Authenticated as @%s", account.Username)
+
+	// Fetch statuses
+	log.Info("Fetching statuses...")
+	allStatuses := []*mastodonAPI.Status{}
+	var maxID mastodonAPI.ID
+
+	// Pagination loop
+	for {
+		pg := &mastodonAPI.Pagination{
+			MaxID: maxID,
+			Limit: 40,
 		}
 
-		// Verify credentials and get account info
-		ctx := context.Background()
-		account, err := client.VerifyCredentials(ctx)
+		statuses, err := client.GetStatuses(ctx, account.ID, pg)
 		if err != nil {
-			return fmt.Errorf("failed to verify Mastodon credentials: %w", err)
+			return fmt.Errorf("failed to fetch statuses: %w", err)
 		}
 
-		log.Infof("Authenticated as @%s", account.Username)
+		if len(statuses) == 0 {
+			break
+		}
 
-		// Fetch statuses
-		log.Info("Fetching statuses...")
-		allStatuses := []*mastodonAPI.Status{}
-		var maxID mastodonAPI.ID
+		// Filter by time range
+		foundInRange := false
+		for _, status := range statuses {
+			if status.CreatedAt.Before(tr.Start) {
+				// We've gone past our time range
+				break
+			}
+			if status.CreatedAt.After(tr.End) {
+				// Haven't reached our time range yet
+				continue
+			}
+			foundInRange = true
+			allStatuses = append(allStatuses, status)
+		}
 
-		// Pagination loop
-		for {
+		// If the last status is before our start time, we're done
+		if len(statuses) > 0 && statuses[len(statuses)-1].CreatedAt.Before(tr.Start) {
+			break
+		}
+
+		// If we didn't find any in range and we're past the end, keep going
+		if !foundInRange && len(statuses) > 0 && statuses[len(statuses)-1].CreatedAt.Before(tr.End) {
+			break
+		}
+
+		maxID = statuses[len(statuses)-1].ID
+	}
+
+	log.Infof("Found %d statuses in time range", len(allStatuses))
+
+	// Apply filters
+	filtered := filterStatuses(allStatuses,
+		viper.GetBool("fetch.exclude_replies"),
+		viper.GetBool("fetch.exclude_boosts"),
+		viper.GetString("fetch.visibility"),
+		viper.GetBool("output.public_only"),
+	)
+
+	log.Infof("After filtering: %d statuses", len(filtered))
+
+	// Convert to template format
+	posts := mastodon.ConvertStatuses(filtered)
+
+	// Fetch favorites unless excluded
+	if !viper.GetBool("fetch.exclude_favorites") {
+		log.Info("Fetching favorites...")
+		allFavorites := []*mastodonAPI.Status{}
+		maxID = "" // Reset maxID for favorites pagination
+
+		// Pagination loop for favorites with smart stopping
+		consecutiveEmptyPages := 0
+		maxConsecutiveEmpty := 2 // Stop after 2 pages with no matches
+		maxTotalPages := 3       // Safety limit: ~120 favorites
+
+		for pageCount := 0; pageCount < maxTotalPages; pageCount++ {
 			pg := &mastodonAPI.Pagination{
 				MaxID: maxID,
 				Limit: 40,
 			}
 
-			statuses, err := client.GetStatuses(ctx, account.ID, pg)
+			favorites, err := client.GetFavourites(ctx, pg)
 			if err != nil {
-				return fmt.Errorf("failed to fetch statuses: %w", err)
+				return fmt.Errorf("failed to fetch favourites: %w", err)
 			}
 
-			if len(statuses) == 0 {
+			if len(favorites) == 0 {
 				break
 			}
 
 			// Filter by time range
 			foundInRange := false
-			for _, status := range statuses {
+			for _, status := range favorites {
 				if status.CreatedAt.Before(tr.Start) {
-					// We've gone past our time range
-					break
+					continue
 				}
 				if status.CreatedAt.After(tr.End) {
-					// Haven't reached our time range yet
 					continue
 				}
 				foundInRange = true
-				allStatuses = append(allStatuses, status)
+				allFavorites = append(allFavorites, status)
 			}
 
-			// If the last status is before our start time, we're done
-			if len(statuses) > 0 && statuses[len(statuses)-1].CreatedAt.Before(tr.Start) {
-				break
-			}
-
-			// If we didn't find any in range and we're past the end, keep going
-			if !foundInRange && len(statuses) > 0 && statuses[len(statuses)-1].CreatedAt.Before(tr.End) {
-				break
-			}
-
-			maxID = statuses[len(statuses)-1].ID
-		}
-
-		log.Infof("Found %d statuses in time range", len(allStatuses))
-
-		// Apply filters
-		filtered := filterStatuses(allStatuses,
-			viper.GetBool("fetch.exclude_replies"),
-			viper.GetBool("fetch.exclude_boosts"),
-			viper.GetString("fetch.visibility"),
-			viper.GetBool("output.public_only"),
-		)
-
-		log.Infof("After filtering: %d statuses", len(filtered))
-
-		// Convert to template format
-		posts := mastodon.ConvertStatuses(filtered)
-
-		// Fetch favorites unless excluded
-		if !viper.GetBool("fetch.exclude_favorites") {
-			log.Info("Fetching favorites...")
-			allFavorites := []*mastodonAPI.Status{}
-			maxID = "" // Reset maxID for favorites pagination
-
-			// Pagination loop for favorites with smart stopping
-			consecutiveEmptyPages := 0
-			maxConsecutiveEmpty := 2 // Stop after 2 pages with no matches
-			maxTotalPages := 3       // Safety limit: ~120 favorites
-
-			for pageCount := 0; pageCount < maxTotalPages; pageCount++ {
-				pg := &mastodonAPI.Pagination{
-					MaxID: maxID,
-					Limit: 40,
-				}
-
-				favorites, err := client.GetFavourites(ctx, pg)
-				if err != nil {
-					return fmt.Errorf("failed to fetch favourites: %w", err)
-				}
-
-				if len(favorites) == 0 {
+			// Smart stopping: if no matches in recent pages, we're probably past the date range
+			if !foundInRange {
+				consecutiveEmptyPages++
+				if consecutiveEmptyPages >= maxConsecutiveEmpty {
+					log.Info("No matches in recent pages, stopping favorites pagination")
 					break
 				}
-
-				// Filter by time range
-				foundInRange := false
-				for _, status := range favorites {
-					if status.CreatedAt.Before(tr.Start) {
-						continue
-					}
-					if status.CreatedAt.After(tr.End) {
-						continue
-					}
-					foundInRange = true
-					allFavorites = append(allFavorites, status)
-				}
-
-				// Smart stopping: if no matches in recent pages, we're probably past the date range
-				if !foundInRange {
-					consecutiveEmptyPages++
-					if consecutiveEmptyPages >= maxConsecutiveEmpty {
-						log.Info("No matches in recent pages, stopping favorites pagination")
-						break
-					}
-				} else {
-					consecutiveEmptyPages = 0 // Reset counter on match
-				}
-
-				maxID = favorites[len(favorites)-1].ID
+			} else {
+				consecutiveEmptyPages = 0 // Reset counter on match
 			}
 
-			log.Infof("Found %d favorites in time range", len(allFavorites))
-
-			// Convert favorites and add to posts
-			favoritePosts := mastodon.ConvertFavourites(allFavorites)
-			posts = append(posts, favoritePosts...)
+			maxID = favorites[len(favorites)-1].ID
 		}
 
-		// Sort posts based on configuration
-		sortOrder := viper.GetString("output.sort_order")
-		if sortOrder == "" {
-			sortOrder = "asc" // Default to oldest first
-		}
-		sortPosts(posts, sortOrder)
+		log.Infof("Found %d favorites in time range", len(allFavorites))
 
-		// Prepare template data
-		data := &templates.TemplateData{
-			StartDate: timerange.FormatDate(tr.Start),
-			EndDate:   timerange.FormatDate(tr.End),
-			Posts:     posts,
-			Days:      templates.GroupPostsByDay(posts),
-		}
+		// Convert favorites and add to posts
+		favoritePosts := mastodon.ConvertFavourites(allFavorites)
+		posts = append(posts, favoritePosts...)
+	}
 
-		// Initialize template renderer
-		templatePath := cfg.Output.Template
-		renderer, err := templates.NewRenderer(templatePath)
-		if err != nil {
-			return fmt.Errorf("failed to initialize template: %w", err)
-		}
+	// Sort posts based on configuration
+	sortOrder := viper.GetString("output.sort_order")
+	if sortOrder == "" {
+		sortOrder = "asc" // Default to oldest first
+	}
+	sortPosts(posts, sortOrder)
 
-		// Render to output
-		outputFile := viper.GetString("fetch.output")
-		if err := renderer.RenderToFile(outputFile, data); err != nil {
-			return fmt.Errorf("failed to render output: %w", err)
-		}
+	// Prepare template data
+	data := &templates.TemplateData{
+		StartDate: timerange.FormatDate(tr.Start),
+		EndDate:   timerange.FormatDate(tr.End),
+		Posts:     posts,
+		Days:      templates.GroupPostsByDay(posts),
+	}
 
-		if outputFile != "" && outputFile != "-" {
-			log.Infof("Output written to %s", outputFile)
-		}
+	// Initialize template renderer
+	templatePath := cfg.Output.Template
+	renderer, err := templates.NewRenderer(templatePath)
+	if err != nil {
+		return fmt.Errorf("failed to initialize template: %w", err)
+	}
 
-		return nil
-	},
+	// Render to output
+	if err := renderer.RenderToFile(outputFile, data); err != nil {
+		return fmt.Errorf("failed to render output: %w", err)
+	}
+
+	if outputFile != "" && outputFile != "-" {
+		log.Infof("Output written to %s", outputFile)
+	}
+
+	return nil
 }
 
 func init() {

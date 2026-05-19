@@ -137,6 +137,22 @@ mastodon-to-markdown whoami
 
 Output includes server, username, display name, follower counts, and account URL.
 
+#### `export` - Orchestrator-friendly export
+
+Same pipeline as `fetch`, but with the canonical `--since/--until/-o` flag
+shape used by [`me-to-markdown`](https://github.com/lmorchard/me-to-markdown)
+and the rest of the `*-to-markdown` family. Filter and sort options come from
+the config file rather than CLI flags.
+
+```bash
+mastodon-to-markdown export --since 168h
+mastodon-to-markdown export --since 2026-05-11 --until 2026-05-18 -o posts.md
+```
+
+`--since` accepts a Go duration (`168h`) or a `YYYY-MM-DD` date and is
+required. `--until` accepts `YYYY-MM-DD` and defaults to now (end-of-day
+inclusive).
+
 #### `fetch` - Export posts
 
 Fetch and export posts to markdown:
