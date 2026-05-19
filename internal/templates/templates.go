@@ -97,7 +97,7 @@ func (r *Renderer) RenderToFile(filename string, data *TemplateData) error {
 	if err != nil {
 		return fmt.Errorf("failed to create output file %s: %w", filename, err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	if err := r.Render(f, data); err != nil {
 		return err
