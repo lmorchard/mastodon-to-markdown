@@ -141,19 +141,21 @@ func runFetchPipeline(ctx context.Context, tr *timerange.TimeRange, outputFile s
 	if !viper.GetBool("fetch.exclude_favorites") {
 		log.Info("Fetching favorites...")
 		allFavorites := []*mastodonAPI.Status{}
-		maxID = "" // Reset maxID for favorites pagination
 
-		// Pagination loop for favorites with smart stopping
+		// The favourites endpoint paginates by an internal favourite-entry
+		// id surfaced only via Link headers (NOT the status.ID). The
+		// go-mastodon library handles this by overwriting *pg with the
+		// parsed Link-header pagination after every call, so we must
+		// reuse the same *pg across iterations — re-allocating each
+		// iteration throws the cursor away and the API returns the same
+		// first page until the safety limit hits, producing duplicated output.
+		pg := &mastodonAPI.Pagination{Limit: 40}
+
 		consecutiveEmptyPages := 0
 		maxConsecutiveEmpty := 2 // Stop after 2 pages with no matches
-		maxTotalPages := 3       // Safety limit: ~120 favorites
+		maxTotalPages := 10      // Safety limit; smart-stop usually ends it sooner
 
 		for pageCount := 0; pageCount < maxTotalPages; pageCount++ {
-			pg := &mastodonAPI.Pagination{
-				MaxID: maxID,
-				Limit: 40,
-			}
-
 			favorites, err := client.GetFavourites(ctx, pg)
 			if err != nil {
 				return fmt.Errorf("failed to fetch favourites: %w", err)
@@ -187,7 +189,10 @@ func runFetchPipeline(ctx context.Context, tr *timerange.TimeRange, outputFile s
 				consecutiveEmptyPages = 0 // Reset counter on match
 			}
 
-			maxID = favorites[len(favorites)-1].ID
+			// No more pages from the API.
+			if pg.MaxID == "" {
+				break
+			}
 		}
 
 		log.Infof("Found %d favorites in time range", len(allFavorites))
